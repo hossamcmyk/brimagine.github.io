@@ -1,1 +1,334 @@
-<h1>Welcome to brimagine</h1>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Lens - AI OCR & Translator</title>
+  <meta name="description" content="Smart Lens is an Android app for AI OCR, text extraction, instant translation, and PDF export. Scan images, extract text, translate, and save as PDF.">
+  <meta name="robots" content="index, follow">
+
+  <style>
+    :root {
+      --bg: #07111f;
+      --card: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.14);
+      --text: #f8fbff;
+      --muted: #b7c4d8;
+      --blue: #38bdf8;
+      --violet: #8b5cf6;
+      --green: #22c55e;
+      --white: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(56, 189, 248, 0.22), transparent 34%),
+        radial-gradient(circle at 85% 20%, rgba(139, 92, 246, 0.28), transparent 34%),
+        radial-gradient(circle at 50% 90%, rgba(34, 197, 94, 0.13), transparent 30%),
+        var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 18px;
+    }
+
+    main {
+      width: 100%;
+      max-width: 1080px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 28px;
+      align-items: center;
+      padding: 34px;
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(18px);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.24);
+      color: #dff7ff;
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(42px, 7vw, 76px);
+      line-height: 0.95;
+      letter-spacing: -2.5px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(90deg, var(--blue), var(--violet));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .subtitle {
+      margin: 22px 0 0;
+      max-width: 640px;
+      color: var(--muted);
+      font-size: clamp(18px, 2vw, 22px);
+      line-height: 1.65;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 30px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 52px;
+      padding: 0 22px;
+      border-radius: 15px;
+      text-decoration: none;
+      font-weight: 700;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 34px rgba(56, 189, 248, 0.25);
+    }
+
+    .primary {
+      color: #03111f;
+      background: linear-gradient(90deg, #7dd3fc, #c4b5fd);
+    }
+
+    .secondary {
+      color: var(--white);
+      border: 1px solid var(--card-border);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 32px;
+    }
+
+    .feature {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .feature strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 16px;
+    }
+
+    .feature span {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .phone-card {
+      position: relative;
+      min-height: 560px;
+      border-radius: 30px;
+      background:
+        linear-gradient(160deg, rgba(56,189,248,0.16), rgba(139,92,246,0.18)),
+        rgba(255,255,255,0.06);
+      border: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .phone {
+      width: 260px;
+      height: 520px;
+      border-radius: 36px;
+      padding: 18px;
+      background: #050b14;
+      border: 7px solid #1b2535;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+    }
+
+    .screen {
+      height: 100%;
+      border-radius: 26px;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(56,189,248,0.30), transparent 35%),
+        linear-gradient(180deg, #101b2e, #07111f);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .app-icon {
+      width: 78px;
+      height: 78px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #38bdf8, #8b5cf6);
+      display: grid;
+      place-items: center;
+      font-size: 36px;
+      box-shadow: 0 12px 34px rgba(56,189,248,0.35);
+    }
+
+    .screen h2 {
+      margin: 18px 0 8px;
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .screen p {
+      color: var(--muted);
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    .mini-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .mini-item {
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.10);
+      font-size: 14px;
+    }
+
+    .footer {
+      margin-top: 18px;
+      text-align: center;
+      color: rgba(255,255,255,0.56);
+      font-size: 13px;
+    }
+
+    @media (max-width: 860px) {
+      .hero {
+        grid-template-columns: 1fr;
+        padding: 24px;
+      }
+
+      .phone-card {
+        min-height: 460px;
+      }
+
+      .phone {
+        width: 230px;
+        height: 460px;
+      }
+
+      .features {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <section class="hero" aria-label="Smart Lens landing page">
+      <div>
+        <div class="badge">AI OCR • Translator • PDF Export</div>
+
+        <h1>
+          Smart Lens<br>
+          <span class="gradient-text">Scan. Extract. Translate.</span>
+        </h1>
+
+        <p class="subtitle">
+          Turn images, documents, labels, and text-heavy screenshots into usable text.
+          Extract what you need, translate it instantly, and export the result as PDF.
+        </p>
+
+        <div class="actions">
+          <a class="button primary" href="https://play.google.com/store/apps/details?id=com.brimagine.smart_lens" target="_blank" rel="noopener">
+            Get Smart Lens on Google Play
+          </a>
+
+          <a class="button secondary" href="/app-ads.txt">
+            View app-ads.txt
+          </a>
+        </div>
+
+        <div class="features">
+          <div class="feature">
+            <strong>AI OCR</strong>
+            <span>Extract text from images, papers, screenshots, and documents.</span>
+          </div>
+
+          <div class="feature">
+            <strong>Instant Translation</strong>
+            <span>Translate extracted text quickly across 16 widely used languages.</span>
+          </div>
+
+          <div class="feature">
+            <strong>PDF Export</strong>
+            <span>Save scanned and translated results as clean PDF files.</span>
+          </div>
+
+          <div class="feature">
+            <strong>Simple Workflow</strong>
+            <span>Choose an image, extract the text, translate, copy, or export.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-card" aria-hidden="true">
+        <div class="phone">
+          <div class="screen">
+            <div>
+              <div class="app-icon">🔍</div>
+              <h2>Smart Lens</h2>
+              <p>AI-powered smart scanning for everyday documents.</p>
+
+              <div class="mini-list">
+                <div class="mini-item">01 — Scan from camera or gallery</div>
+                <div class="mini-item">02 — Extract text instantly</div>
+                <div class="mini-item">03 — Translate in one tap</div>
+                <div class="mini-item">04 — Copy or export as PDF</div>
+              </div>
+            </div>
+
+            <p>Available now on Google Play.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer">© Brimagine. Smart Lens for Android.</p>
+  </main>
+</body>
+</html>
