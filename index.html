@@ -677,14 +677,22 @@
 
 /* Arabic-only layout fixes */
 [dir="rtl"] .hero-copy,
-[dir="rtl"] .smart-card,
 [dir="rtl"] .problem,
 [dir="rtl"] .feature-card,
 [dir="rtl"] .use-card,
 [dir="rtl"] .languages,
-[dir="rtl"] .company,
-[dir="rtl"] .final-cta {
+[dir="rtl"] .company {
   text-align: right;
+}
+
+/* Keep Smart Lens presentation card balanced in Arabic */
+[dir="rtl"] .smart-card {
+  text-align: center;
+}
+
+/* Keep final CTA centered in Arabic */
+[dir="rtl"] .final-cta {
+  text-align: center;
 }
 
 /* Keep Arabic trust phrases aligned to the right */
@@ -703,6 +711,17 @@
 /* Keep Arabic hero buttons aligned naturally */
 [dir="rtl"] .hero-actions {
   justify-content: flex-start;
+}
+    /* Raise hero text block without affecting the rest of the page */
+.hero-copy {
+  align-self: start;
+  padding-top: 32px;
+}
+
+@media (max-width:980px) {
+  .hero-copy {
+    padding-top: 0;
+  }
 }
   </style>
 </head>
