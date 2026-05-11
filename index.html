@@ -662,6 +662,48 @@
       .features { grid-template-columns:1fr; }
       .smart-card, .company, .problem, .final-cta { padding:24px; }
     }
+    /* Final layout fixes */
+
+/* Make the three trust phrases vertical in all languages */
+.trust {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.trust span {
+  width: fit-content;
+  max-width: 100%;
+}
+
+/* Arabic-only layout fixes */
+[dir="rtl"] .hero-copy,
+[dir="rtl"] .smart-card,
+[dir="rtl"] .problem,
+[dir="rtl"] .feature-card,
+[dir="rtl"] .use-card,
+[dir="rtl"] .languages,
+[dir="rtl"] .company,
+[dir="rtl"] .final-cta {
+  text-align: right;
+}
+
+/* Keep Arabic trust phrases aligned to the right */
+[dir="rtl"] .trust {
+  align-items: flex-end;
+}
+
+/* Fix Arabic cards/icon direction without affecting other languages */
+[dir="rtl"] .brand,
+[dir="rtl"] .screen-action,
+[dir="rtl"] .checks li,
+[dir="rtl"] .contact-card {
+  flex-direction: row;
+}
+
+/* Keep Arabic hero buttons aligned naturally */
+[dir="rtl"] .hero-actions {
+  justify-content: flex-start;
+}
   </style>
 </head>
 
