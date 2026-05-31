@@ -287,13 +287,19 @@
         .catch(err => console.error("Translation Failure:", err));
     }
 
-    function copyToClipboard(id) {
-        const el = document.getElementById(id);
+    async function copyToClipboard(id) {
+    const el = document.getElementById(id);
+
+    try {
+        await navigator.clipboard.writeText(el.value);
+    } catch {
         el.select();
         document.execCommand('copy');
-        const lang = localStorage.getItem('brimagineLanguage') || 'en';
-        alert(translations[lang].ocr_copied || "Copied!");
     }
+
+    const lang = localStorage.getItem('brimagineLanguage') || 'en';
+    alert(translations[lang].ocr_copied || "Copied!");
+}
 
     window.onload = init;
   
