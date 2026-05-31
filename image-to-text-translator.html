@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07111f">
   <title>Smart Lens - Online AI OCR & Translator | Brimagine</title>
   
   <!-- [4] تحديث الـ SEO لزيادة الأرشفة -->
@@ -13,6 +14,8 @@
   <meta property="og:description" content="Extract text from images instantly and translate to multiple languages online for free.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://brimagine.com/cover.jpg">
+  <meta property="og:url" content="https://brimagine.com/tools/smart-lens.html">
+  <meta property="og:site_name" content="Brimagine">
   
   <style>
     :root {
@@ -55,7 +58,7 @@
     textarea { 
       width: 100%; height: 240px; background: transparent; border: 0; color: var(--muted); 
       resize: none; outline: none; font-family: inherit; font-size: 15px; line-height: 1.7;
-      white-space: pre-wrap;
+      white-space: pre-wrap; overflow-y: auto;
     }
 
     /* [3] تعديل شاشة الترقية: تظهر بذكاء دون إخفاء النتائج */
@@ -180,6 +183,31 @@
         document.getElementById('languageSelect').value = savedLang;
         setLanguage(savedLang);
         checkUsageLimit();
+      // Drag & Drop
+    const dz = document.getElementById('dropZone');
+
+    dz.ondragover = (e) => {
+      e.preventDefault();
+      dz.style.borderColor = 'var(--blue)';
+    };
+
+    dz.ondragleave = () => {
+      dz.style.borderColor = 'var(--border)';
+    };
+
+    dz.ondrop = (e) => {
+      e.preventDefault();
+
+      dz.style.borderColor = 'var(--border)';
+
+      const input = document.getElementById('fileInp');
+
+      input.files = e.dataTransfer.files;
+
+      input.dispatchEvent(
+        new Event('change')
+      );
+     };
     }
 
     function setLanguage(lang) {
@@ -195,11 +223,15 @@
 
     // [3] قفل منطقة الرفع فقط لإبقاء النتائج ظاهرة (تحويل أفضل)
     function checkUsageLimit() {
-        if (scanCounter >= 2) {
-            document.getElementById('dropZone').style.display = 'none';
-            document.getElementById('upgradeArea').style.display = 'block';
+    if (scanCounter >= 2) {
+        const dropZone = document.getElementById('dropZone');
+        if (dropZone) {
+            dropZone.remove(); // حذف فعلي للمحرك من واجهة المستخدم
         }
+        document.getElementById('upgradeArea').style.display = 'block';
     }
+}
+
 
     document.getElementById('languageSelect').onchange = (e) => setLanguage(e.target.value);
 
@@ -225,7 +257,7 @@
 
             scanCounter++;
             localStorage.setItem('br_scan_limit', scanCounter);
-            setTimeout(checkUsageLimit, 5000); 
+            setTimeout(checkUsageLimit, 1000); 
         } catch (err) {
             console.error("OCR Failure:", err);
         } finally {
@@ -264,32 +296,8 @@
     }
 
     window.onload = init;
-  // Drag & Drop Support //دعم السحب والافلات
-  const dz = document.getElementById('dropZone');
-
-dz.ondragover = (e) => {
-  e.preventDefault();
-  dz.style.borderColor = 'var(--blue)';
-};
-
-dz.ondragleave = () => {
-  dz.style.borderColor = 'var(--border)';
-};
-
-dz.ondrop = (e) => {
-  e.preventDefault();
-
-  dz.style.borderColor = 'var(--border)';
-
-  const input = document.getElementById('fileInp');
-
-  input.files = e.dataTransfer.files;
-
-  input.dispatchEvent(
-    new Event('change')
-  );
-};
+  
 </script>
   
 </body>
-</html>راجع الملف ولم ننهي موضوع الصورة بعد
+</html>
