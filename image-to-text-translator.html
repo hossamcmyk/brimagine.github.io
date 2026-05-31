@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Lens - Online AI OCR & Translator | Brimagine</title>
+  
+  <!-- [4] تحديث الـ SEO لزيادة الأرشفة -->
+  <meta name="description" content="Free AI image to text translator online. Extract text from images instantly and translate to multiple languages with Smart Lens OCR.">
+  <meta name="keywords" content="Online OCR, Image Translator, Extract text from image, Smart Lens, Brimagine">
+
+  <meta property="og:title" content="Image to Text Translator Online | Smart Lens">
+  <meta property="og:description" content="Extract text from images instantly and translate to multiple languages online for free.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://brimagine.com/cover.jpg">
+  
+  <style>
+    :root {
+      --bg:#07111f; --bg2:#0b1020; --text:#f8fbff; --muted:#b8c5d9;
+      --card:rgba(255,255,255,.075); --border:rgba(255,255,255,.14);
+      --blue:#38bdf8; --violet:#8b5cf6; --pink:#ec4899; --green:#22c55e;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; min-height:100vh; color:var(--text);
+      font-family:Inter, ui-sans-serif, system-ui, sans-serif;
+      background: radial-gradient(circle at 10% 8%, rgba(56,189,248,.15), transparent 32%),
+                  linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+      overflow-x:hidden;
+    }
+    .page { width:min(1180px, calc(100% - 36px)); margin:0 auto; }
+    .nav { padding:20px 0; display:flex; align-items:center; justify-content:space-between; backdrop-filter:blur(18px); }
+    .brand { display:inline-flex; align-items:center; gap:12px; text-decoration:none; color:inherit; }
+    .brand-mark { width:45px; height:45px; border-radius:15px; display:grid; place-items:center; font-weight:950; background:linear-gradient(135deg, var(--blue), var(--violet)); }
+    
+    .section-head { text-align:center; margin: 40px 0; }
+    .section-head h1 { font-size: clamp(34px, 5vw, 58px); letter-spacing:-2px; margin:0; }
+
+    .tool-panel { border-radius:32px; border:1px solid var(--border); background:rgba(255,255,255,0.05); backdrop-filter:blur(14px); padding:40px; }
+    
+    /* منطقة الرفع */
+    .upload-area { 
+      border: 2px dashed var(--border); border-radius: 24px; padding: 60px 20px; 
+      text-align: center; cursor: pointer; transition: 0.3s; background: rgba(255,255,255,0.02);
+      margin-bottom: 20px;
+    }
+    .upload-area:hover { border-color: var(--blue); background: rgba(56,189,248,0.05); }
+    .upload-area i { font-size: 50px; display: block; margin-bottom: 15px; font-style: normal; }
+
+    .results-container { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 34px; }
+    .res-box { background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 22px; padding: 22px; }
+    .res-box header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .res-box h3 { margin:0; font-size: 13px; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; font-weight: 950; }
+    
+    textarea { 
+      width: 100%; height: 240px; background: transparent; border: 0; color: var(--muted); 
+      resize: none; outline: none; font-family: inherit; font-size: 15px; line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    /* [3] تعديل شاشة الترقية: تظهر بذكاء دون إخفاء النتائج */
+    .upgrade-card { display: none; text-align: center; padding: 40px 20px; border-radius: 24px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.2); animation: fadeInUp 0.6s ease; margin-top: 20px; }
+    .royal-circle {
+      width: 180px; height: 180px; border-radius: 50%; margin: 0 auto 20px;
+      background: linear-gradient(135deg, var(--blue), var(--violet), var(--pink));
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-decoration: none; color: #fff; font-weight: 950; border: 6px solid rgba(255,255,255,0.1);
+      box-shadow: 0 0 40px rgba(56,189,248,0.3); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .royal-circle:hover { transform: scale(1.05); }
+
+    .gradient-text { background: linear-gradient(90deg, #7dd3fc, #c4b5fd, #f9a8d4); -webkit-background-clip: text; color: transparent; }
+    [dir="rtl"] .res-box { text-align: right; }
+    [dir="rtl"] textarea { direction: rtl; }
+    @media (max-width: 850px) { .results-container { grid-template-columns: 1fr; } }
+    
+    #loader { display:none; position:fixed; inset:0; background:rgba(7,17,31,0.85); z-index:100; place-items:center; backdrop-filter:blur(8px); }
+    .spinner { width:50px; height:50px; border:4px solid var(--blue); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  </style>
+</head>
+<body>
+
+<div id="loader"><div style="text-align:center;"><div class="spinner"></div><p id="loaderStatus" style="margin-top:20px; font-weight:950;" data-i18n="tool_scanning"></p></div></div>
+
+<div class="page">
+  <header class="nav">
+    <a href="index.html" class="brand">
+      <div class="brand-mark">B</div>
+      <strong>Brimagine</strong>
+    </a>
+    <select id="languageSelect" style="background:var(--card); color:#fff; border:1px solid var(--border); border-radius:999px; padding:8px 16px; font-weight:900;">
+        <option value="en">English</option><option value="fr">Français</option><option value="de">Deutsch</option>
+        <option value="tr">Türkçe</option><option value="es">Español</option><option value="pt-BR">Português BR</option>
+        <option value="id">Indonesia</option><option value="hi">हिन्दी</option><option value="it">Italiano</option>
+        <option value="ja">日本語</option><option value="ru">Русский</option><option value="nl">Nederlands</option>
+        <option value="pl">Polski</option><option value="fi">Suomi</option><option value="ko">한국어</option>
+        <option value="ar">العربية</option>
+    </select>
+  </header>
+
+  <main>
+    <div class="section-head" id="toolTitle">
+      <h1 class="gradient-text" data-i18n="tool_page_title"></h1>
+    </div>
+
+    <div class="tool-panel">
+      <!-- منطقة الرفع: سيتم إخفاؤها عند نفاذ المحاولات -->
+      <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInp').click()">
+        <i>📸</i>
+        <h3 data-i18n="tool_upload_label"></h3>
+        <input type="file" id="fileInp" hidden accept="image/*">
+      </div>
+
+      <!-- [3] شاشة الترقية: تظهر مكان الـ Upload Area فقط -->
+      <div id="upgradeArea" class="upgrade-card">
+          <a href="https://play.google.com/store/apps/details?id=com.brimagine.smart_lens" class="royal-circle">
+            <span style="font-size:40px;">💎</span>
+            <span data-i18n="tool_download_now" style="font-size:13px; text-align:center;"></span>
+          </a>
+          <h2 data-i18n="tool_limit_msg" style="color:var(--muted); font-size:18px;"></h2>
+      </div>
+
+      <!-- النتائج تبقى ظاهرة لتعزيز القيمة للمستخدم -->
+      <div class="results-container" id="resultsView" style="display:none;">
+        <div class="res-box">
+          <header><h3 data-i18n="tool_result_orig"></h3><button onclick="copyToClipboard('ocrResult')" style="background:none; border:0; color:var(--blue); cursor:pointer;">📋</button></header>
+          <textarea id="ocrResult" readonly></textarea>
+        </div>
+        <div class="res-box">
+          <header>
+            <h3 data-i18n="tool_result_trans"></h3>
+            <select id="targetLanguage" style="background:var(--bg); color:var(--pink); border:1px solid var(--border); border-radius:8px; font-weight:bold;" onchange="executeTranslation()">
+                <option value="en">English</option><option value="ar">العربية</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="es">Español</option>
+            </select>
+          </header>
+          <textarea id="translatedResult" readonly></textarea>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+<script>
+    // [1] خريطة اللغات لتحسين أداء الـ OCR
+    const ocrLangMap = {
+      ar:'ara', en:'eng', fr:'fra', de:'deu', tr:'tur', es:'spa',
+      'pt-BR':'por', id:'ind', hi:'hin', it:'ita', ja:'jpn', ru:'rus',
+      nl:'nld', pl:'pol', fi:'fin', ko:'kor'
+    };
+
+    const translations = {
+        "en": { "tool_page_title": "AI OCR & Instant Translator", "tool_upload_label": "Drop your image here or click to upload", "tool_scanning": "Scanning image...", "tool_result_orig": "Extracted Text", "tool_result_trans": "Translated Text", "tool_limit_msg": "Web demo limit reached. Get the app for unlimited scans!", "tool_download_now": "Download Smart Lens", "ocr_copied": "Copied!" },
+        "ar": { "tool_page_title": "مستخرج النصوص الذكي والمترجم الفوري", "tool_upload_label": "اسحب الصورة هنا أو اضغط للرفع", "tool_scanning": "جاري فحص الصورة...", "tool_result_orig": "النص المستخرج", "tool_result_trans": "النص المترجم", "tool_limit_msg": "لقد وصلت للحد الأقصى للتجربة. حمل التطبيق للمسح غير المحدود!", "tool_download_now": "حمل Smart Lens الآن", "ocr_copied": "تم النسخ!" },
+        "fr": { "tool_page_title": "OCR IA et traducteur instantané", "tool_upload_label": "Déposez votre image ici", "tool_scanning": "Analyse...", "tool_result_orig": "Texte extrait", "tool_result_trans": "Texte traduit", "tool_limit_msg": "Limite atteinte. Téléchargez l'application !", "tool_download_now": "Smart Lens", "ocr_copied": "Copié !" },
+        "de": { "tool_page_title": "KI-OCR & Sofort-Übersetzer", "tool_upload_label": "Bild hier ablegen", "tool_scanning": "Wird gescannt...", "tool_result_orig": "Extrahierter Text", "tool_result_trans": "Übersetzter Text", "tool_limit_msg": "Limit erreicht. App herunterladen!", "tool_download_now": "Smart Lens", "ocr_copied": "Kopiert!" },
+        "tr": { "tool_page_title": "AI OCR ve Anında Çevirmen", "tool_upload_label": "Görseli yükleyin", "tool_scanning": "Taranıyor...", "tool_result_orig": "Çıkarılan Metin", "tool_result_trans": "Çevrilen Metin", "tool_limit_msg": "Sınıra ulaşıldı. Uygulamayı indirin!", "tool_download_now": "Smart Lens", "ocr_copied": "Kopyalandı!" },
+        "es": { "tool_page_title": "OCR con IA y traductor", "tool_upload_label": "Arrastra tu imagen aquí", "tool_scanning": "Escaneando...", "tool_result_orig": "Texto extraído", "tool_result_trans": "Texto traducido", "tool_limit_msg": "Límite alcanzado. ¡Descarga la app!", "tool_download_now": "Smart Lens", "ocr_copied": "¡Copiado!" },
+        "pt-BR": { "tool_page_title": "OCR com IA e tradutor", "tool_upload_label": "Arraste sua imagem", "tool_scanning": "Digitalizando...", "tool_result_orig": "Texto extraído", "tool_result_trans": "Texto traduzido", "tool_limit_msg": "Limite atingido. Baixe o app!", "tool_download_now": "Smart Lens", "ocr_copied": "Copiado!" },
+        "id": { "tool_page_title": "AI OCR & Penerjemah Instan", "tool_upload_label": "Letakkan gambar di sini", "tool_scanning": "Memindai...", "tool_result_orig": "Teks Ekstraksi", "tool_result_trans": "Teks Terjemahan", "tool_limit_msg": "Batas tercapai. Unduh aplikasi!", "tool_download_now": "Smart Lens", "ocr_copied": "Tersalin!" },
+        "hi": { "tool_page_title": "एआई ओसीआर और अनुवादक", "tool_upload_label": "छवि यहाँ अपलोड करें", "tool_scanning": "स्कैनिंग...", "tool_result_orig": "निकाला गया टेक्स्ट", "tool_result_trans": "अनुवादित टेक्स्ट", "tool_limit_msg": "सीमा समाप्त. ऐप प्राप्त करें!", "tool_download_now": "स्मार्ट लेंस", "ocr_copied": "कॉपी!" },
+        "it": { "tool_page_title": "AI OCR e traduttore", "tool_upload_label": "Trascina l'immagine", "tool_scanning": "Scansione...", "tool_result_orig": "Testo estratto", "tool_result_trans": "Testo tradotto", "tool_limit_msg": "Limite raggiunto. Scarica l'app!", "tool_download_now": "Smart Lens", "ocr_copied": "Copiato!" },
+        "ja": { "tool_page_title": "AI OCR & 即時翻訳機", "tool_upload_label": "画像をアップロード", "tool_scanning": "スキャン中...", "tool_result_orig": "抽出テキスト", "tool_result_trans": "翻訳テキスト", "tool_limit_msg": "制限に達しました。アプリを入手！", "tool_download_now": "Smart Lens", "ocr_copied": "コピー済み" },
+        "ru": { "tool_page_title": "AI OCR и переводчик", "tool_upload_label": "Перетащите изображение", "tool_scanning": "Сканирование...", "tool_result_orig": "Извлеченный текст", "tool_result_trans": "Переведенный текст", "tool_limit_msg": "Лимит исчерпан. Скачайте приложение!", "tool_download_now": "Smart Lens", "ocr_copied": "Скопировано" },
+        "nl": { "tool_page_title": "AI OCR & vertaler", "tool_upload_label": "Sleep afbeelding hier", "tool_scanning": "Scannen...", "tool_result_orig": "Geëxtraheerde tekst", "tool_result_trans": "Vertaalde tekst", "tool_limit_msg": "Limiet bereikt. Download de app!", "tool_download_now": "Smart Lens", "ocr_copied": "Gekopieerd" },
+        "pl": { "tool_page_title": "AI OCR i tłumacz", "tool_upload_label": "Przeciągnij obraz", "tool_scanning": "Skanowanie...", "tool_result_orig": "Wyodrębniony tekst", "tool_result_trans": "Przetłumaczony tekst", "tool_limit_msg": "Limit osiągnięty. Pobierz aplikację!", "tool_download_now": "Smart Lens", "ocr_copied": "Skopiowano" },
+        "fi": { "tool_page_title": "AI OCR ja kääntäjä", "tool_upload_label": "Pudota kuva tähän", "tool_scanning": "Skannataan...", "tool_result_orig": "Poimittu teksti", "tool_result_trans": "Käännetty teksti", "tool_limit_msg": "Raja saavutettu. Hanki sovellus!", "tool_download_now": "Smart Lens", "ocr_copied": "Kopioitu" },
+        "ko": { "tool_page_title": "AI OCR 및 즉석 번역기", "tool_upload_label": "이미지 업로드", "tool_scanning": "스캔 중...", "tool_result_orig": "추출된 텍스트", "tool_result_trans": "번역된 텍스트", "tool_limit_msg": "한계 도달. 앱 설치!", "tool_download_now": "Smart Lens", "ocr_copied": "복사됨" }
+    };
+
+    let scanCounter = parseInt(
+    localStorage.getItem('br_scan_limit') || '0',
+    10
+    );
+
+    function init() {
+        const savedLang = localStorage.getItem('brimagineLanguage') || 'en';
+        document.getElementById('languageSelect').value = savedLang;
+        setLanguage(savedLang);
+        checkUsageLimit();
+    }
+
+    function setLanguage(lang) {
+        document.documentElement.lang = lang;
+        document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+        localStorage.setItem('brimagineLanguage', lang);
+        
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (translations[lang] && translations[lang][key]) el.textContent = translations[lang][key];
+        });
+    }
+
+    // [3] قفل منطقة الرفع فقط لإبقاء النتائج ظاهرة (تحويل أفضل)
+    function checkUsageLimit() {
+        if (scanCounter >= 2) {
+            document.getElementById('dropZone').style.display = 'none';
+            document.getElementById('upgradeArea').style.display = 'block';
+        }
+    }
+
+    document.getElementById('languageSelect').onchange = (e) => setLanguage(e.target.value);
+
+    document.getElementById('fileInp').onchange = async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        document.getElementById('loader').style.display = 'grid';
+        
+        try {
+            // [1] استخدام لغة الواجهة الحالية لتحسين السرعة والدقة
+            const currentUI = localStorage.getItem('brimagineLanguage') || 'en';
+            const ocrLang = ocrLangMap[currentUI] || 'eng';
+
+            const { data: { text } } = await Tesseract.recognize(file, ocrLang);
+            document.getElementById('ocrResult').value = text;
+            document.getElementById('resultsView').style.display = 'grid';
+                  window.scrollTo({
+          top: document.getElementById('resultsView').offsetTop - 40,
+          behavior: 'smooth'
+        });
+            executeTranslation();
+
+            scanCounter++;
+            localStorage.setItem('br_scan_limit', scanCounter);
+            setTimeout(checkUsageLimit, 5000); 
+        } catch (err) {
+            console.error("OCR Failure:", err);
+        } finally {
+            document.getElementById('loader').style.display = 'none';
+        }
+    };
+
+    // [5] استخدام الرابط والمنطق المجاني للترجمة الموصى به
+    function executeTranslation() {
+        const text = document.getElementById('ocrResult').value;
+        if(!text.trim()) return;
+        
+        const target = document.getElementById('targetLanguage').value;
+        const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${target}&dt=t&q=${encodeURIComponent(text)}`;
+        
+        fetch(apiUrl, {
+            headers: {
+                "Accept": "application/json",
+                "User-Agent": "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            const resultText = data[0].map(s => s[0]).join('');
+            document.getElementById('translatedResult').value = resultText;
+        })
+        .catch(err => console.error("Translation Failure:", err));
+    }
+
+    function copyToClipboard(id) {
+        const el = document.getElementById(id);
+        el.select();
+        document.execCommand('copy');
+        const lang = localStorage.getItem('brimagineLanguage') || 'en';
+        alert(translations[lang].ocr_copied || "Copied!");
+    }
+
+    window.onload = init;
+  // Drag & Drop Support //دعم السحب والافلات
+  const dz = document.getElementById('dropZone');
+
+dz.ondragover = (e) => {
+  e.preventDefault();
+  dz.style.borderColor = 'var(--blue)';
+};
+
+dz.ondragleave = () => {
+  dz.style.borderColor = 'var(--border)';
+};
+
+dz.ondrop = (e) => {
+  e.preventDefault();
+
+  dz.style.borderColor = 'var(--border)';
+
+  const input = document.getElementById('fileInp');
+
+  input.files = e.dataTransfer.files;
+
+  input.dispatchEvent(
+    new Event('change')
+  );
+};
+</script>
+  
+</body>
+</html>راجع الملف ولم ننهي موضوع الصورة بعد
