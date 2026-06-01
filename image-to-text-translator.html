@@ -155,16 +155,40 @@
 
       <!-- النتائج تبقى ظاهرة لتعزيز القيمة للمستخدم -->
       <div class="results-container" id="resultsView" style="display:none;">
+        
         <div class="res-box">
-          <header><h3 data-i18n="tool_result_orig"></h3><button onclick="copyToClipboard('ocrResult')" class="copy-btn">📋 Copy</button></header>
+          <header>
+            <h3 data-i18n="tool_result_orig"></h3>
+            <button onclick="copyToClipboard('ocrResult')" class="copy-btn">📋 Copy</button>
+          </header>
           <textarea id="ocrResult" readonly></textarea>
         </div>
+        
         <div class="res-box">
           <header>
             <h3 data-i18n="tool_result_trans"></h3>
-            <select id="targetLanguage" style="background:var(--bg); color:var(--pink); border:1px solid var(--border); border-radius:8px; font-weight:bold;" onchange="executeTranslation()">
-                <option value="en">English</option><option value="ar">العربية</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="es">Español</option>
-            </select>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button onclick="copyToClipboard('translatedResult')" class="copy-btn">📋 Copy</button>
+                
+                <select id="targetLanguage" style="background:var(--bg); color:var(--pink); border:1px solid var(--border); border-radius:8px; font-weight:bold; padding: 6px 10px;" onchange="executeTranslation()">
+                    <option value="en">English</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                    <option value="tr">Türkçe</option>
+                    <option value="es">Español</option>
+                    <option value="pt">Português BR</option>
+                    <option value="id">Indonesia</option>
+                    <option value="hi">हिन्दी</option>
+                    <option value="it">Italiano</option>
+                    <option value="ja">日本語</option>
+                    <option value="ru">Русский</option>
+                    <option value="nl">Nederlands</option>
+                    <option value="pl">Polski</option>
+                    <option value="fi">Suomi</option>
+                    <option value="ko">한국어</option>
+                    <option value="ar">العربية</option>
+                </select>
+            </div>
           </header>
           <textarea id="translatedResult" readonly></textarea>
         </div>
@@ -201,10 +225,20 @@
         "ko": { "tool_page_title": "AI OCR 및 즉석 번역기", "tool_upload_label": "이미지 업로드", "tool_scanning": "스캔 중...", "tool_result_orig": "추출된 텍스트", "tool_result_trans": "번역된 텍스트", "tool_limit_msg": "한계 도달. 앱 설치!", "tool_download_now": "Smart Lens", "ocr_copied": "복사됨" }
     };
 
-    let scanCounter = parseInt(
-    localStorage.getItem('br_scan_limit') || '0',
-    10
-    );
+    // --- بداية النظام اليومي للمحاولات ---
+    const getUsageData = () => {
+        const today = new Date().toDateString(); // يحصل على تاريخ اليوم (مثل: Mon Jun 01 2026)
+        let data = JSON.parse(localStorage.getItem('br_usage_data')) || { date: today, count: 0 };
+        
+        // تصفير العداد التلقائي إذا بدأ يوم جديد
+        if (data.date !== today) {
+            data = { date: today, count: 0 };
+            localStorage.setItem('br_usage_data', JSON.stringify(data));
+        }
+        return data;
+    };
+    let usageData = getUsageData();
+    // --- نهاية النظام اليومي ---
 
     function init() {
         const savedLang = localStorage.getItem('brimagineLanguage') || 'en';
@@ -249,16 +283,17 @@
         });
     }
 
-    // [3] قفل منطقة الرفع فقط لإبقاء النتائج ظاهرة (تحويل أفضل)
+    // [3] قفل منطقة الرفع فقط لإبقاء النتائج ظاهرة بعد استنفاد 3 محاولات يومية
     function checkUsageLimit() {
-    if (scanCounter >= 2) {
-        const dropZone = document.getElementById('dropZone');
-        if (dropZone) {
-            dropZone.remove(); // حذف فعلي للمحرك من واجهة المستخدم
+        usageData = getUsageData(); // تحديث للتحقق من اليوم الحالي
+        if (usageData.count >= 3) {
+            const dropZone = document.getElementById('dropZone');
+            if (dropZone) {
+                dropZone.remove(); // حذف فعلي للمحرك من واجهة المستخدم
+            }
+            document.getElementById('upgradeArea').style.display = 'block';
         }
-        document.getElementById('upgradeArea').style.display = 'block';
     }
-}
 
 
     document.getElementById('languageSelect').onchange = (e) => setLanguage(e.target.value);
@@ -270,11 +305,33 @@
         document.getElementById('loader').style.display = 'grid';
         
         try {
-            // [1] استخدام لغة الواجهة الحالية لتحسين السرعة والدقة
-            const currentUI = localStorage.getItem('brimagineLanguage') || 'en';
-            const ocrLang = ocrLangMap[currentUI] || 'eng';
+            // 1. الفحص التلقائي المبدئي لمعرفة نوع الأبجدية في الصورة
+            const detection = await Tesseract.detect(file);
+            const script = detection.data.script; 
 
+            // 2. متغير تحديد لغة الـ OCR الافتراضية
+            let ocrLang = 'eng'; 
+
+            // 3. خريطة ديناميكية لربط الأبجدية بالـ 16 لغة اللي عندك في الكود
+            if (script === 'Arabic') {
+                ocrLang = 'ara'; // العربية
+            } else if (script === 'Cyrillic') {
+                ocrLang = 'rus'; // الروسية
+            } else if (script === 'Devanagari') {
+                ocrLang = 'hin'; // الهندية
+            } else if (script === 'Japanese' || script === 'Han') {
+                ocrLang = 'jpn'; // اليابانية
+            } else if (script === 'Hangul') {
+                ocrLang = 'kor'; // الكورية
+            } else if (script === 'Latin') {
+                // بما إن باقي اللغات الـ 10 عندك كلها بتشترك في الأبجدية اللاتينية (Latin)،
+              // الحل الهندسي الصحيح: حزمة اللاتين الموحدة (ملف واحد خفيف يشمل كل اللغات اللاتينية دون تهنيج)
+                ocrLang = 'Latin';
+            }
+
+            // 4. تشغيل المسح الفعلي باللغة الديناميكية المحددة
             const { data: { text } } = await Tesseract.recognize(file, ocrLang);
+           // بقية الكود الأصلي الخاص بك كما هو دون تغيير للنتائج والعداد:
             document.getElementById('ocrResult').value = text;
             document.getElementById('resultsView').style.display = 'grid';
                   window.scrollTo({
@@ -283,8 +340,8 @@
         });
             executeTranslation();
 
-            scanCounter++;
-            localStorage.setItem('br_scan_limit', scanCounter);
+            usageData.count++;
+            localStorage.setItem('br_usage_data', JSON.stringify(usageData));
             setTimeout(checkUsageLimit, 1000); 
         } catch (err) {
             console.error("OCR Failure:", err);
@@ -299,6 +356,11 @@
         if(!text.trim()) return;
         
         const target = document.getElementById('targetLanguage').value;
+      const translatedBox = document.getElementById('translatedResult');
+        
+        // ضبط الاتجاه والمحاذاة بناءً على لغة الترجمة المستهدفة (عربي يمين، غيره شمال)
+        translatedBox.style.direction = (target === 'ar') ? 'rtl' : 'ltr';
+        translatedBox.style.textAlign = (target === 'ar') ? 'right' : 'left';
         const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${target}&dt=t&q=${encodeURIComponent(text)}`;
         
         fetch(apiUrl, {
