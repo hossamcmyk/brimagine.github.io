@@ -491,10 +491,10 @@
         });
     }
 
-    // [3] قفل منطقة الرفع فقط لإبقاء النتائج ظاهرة بعد استنفاد 3 محاولات يومية
+    // [3] قفل منطقة الرفع فقط لإبقاء النتائج ظاهرة بعد استنفاد 5 محاولات يومية
     function checkUsageLimit() {
         usageData = getUsageData(); // تحديث للتحقق من اليوم الحالي
-        if (usageData.count >= 3) {
+        if (usageData.count >= 5) {
             const dropZone = document.getElementById('dropZone');
             if (dropZone) {
                 dropZone.remove(); // حذف فعلي للمحرك من واجهة المستخدم
