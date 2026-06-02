@@ -77,12 +77,16 @@
     }
 
     .brand {
-      display:inline-flex;
-      align-items:center;
-      gap:12px;
-      text-decoration:none;
-      min-width:max-content;
-    }
+  display:flex;              /* بدل inline-flex */
+  align-items:center;
+  gap:12px;
+  text-decoration:none;
+}
+
+.brand-text {
+  display:flex;
+  flex-direction:column;
+}
 
     .brand-mark {
       width:80px;
@@ -746,13 +750,17 @@
 <body>
   <header class="page nav">
     <a class="brand" href="#top" aria-label="Brimagine home">
-      <div class="brand-mark">
-      <img src="brimagine_logo.png" alt="Brimagine">   
-      </div>
-        <strong>Brimagine</strong>
-        <span data-i18n="nav_tagline">Shaping Tomorrow with Today’s Tech</span>
-      </div>
-    </a>
+  <div class="brand-mark">
+    <img src="brimagine_logo.png" alt="Brimagine">   
+  </div>
+
+  <div class="brand-text">
+    <strong>Brimagine</strong>
+    <span data-i18n="nav_tagline">
+      Shaping Tomorrow with Today’s Tech
+    </span>
+  </div>
+</a>
 
     <div class="nav-actions">
       <label class="language-picker" for="languageSelect">
