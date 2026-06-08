@@ -1,0 +1,164 @@
+<!-- 1. استدعاء مكتبة تيسراكت من السيرفر العالمي -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<script>
+    // 2. هنا تضع "كود تيسراكت V5" الذي أرسلته لي في أول المحادثة (الدوال الأصلية)
+    /**
+ * ============================================================================
+ * نظام المعالجة السحابي المغلق واستخراج النصوص غير اللاتينية (Enterprise Production Edition)
+ * إصدار تيسراكت 5 (Tesseract.js V5) - بيئة معالجة خلفية صامتة بالكامل (Headless/Background Service)
+ * ============================================================================
+ * * الالتزام الصارم والمطلق بجميع بنود قائمة التحقق الهندسية:
+ * 1. فحص لغة المصدر استباقياً وعزلها عبر (Tesseract.detect) قبل المسح الشامل وقبل بناء الـ Worker.
+ * 2. منع التحميل المتعدد نهائياً لحماية الذاكرة (تحميل حزمة لغة فردية واحدة فقط لا غير بناءً على الأبجدية والتلميح).
+ * 3. التغطية الكاملة والشاملة لشبكة اللغات غير اللاتينية الحية (الأوكرانية، الأردو، الفارسية، الروسية، إلخ).
+ * 4. تصفير وإعدام الذاكرة بشكل قطعي عبر تدمير الـ Worker في كتلة (finally) لمنع أي تسريب (Memory Leak).
+ * 5. نظام صامت تماماً: لا توجد واجهات، لا توجد رسائل مستخدم، يتم رمي الأخطاء داخلياً لكسر الـ Promise في الخلفية.
+ */
+
+/**
+ * الخريطة الديناميكية الشاملة لفرز الأبجديات غير اللاتينية الحية وربطها بحزمة لغة مفردة
+ * @param {string} script - اسم الأبجدية المكتشفة من خطوة الفحص الاستباقي
+ * @param {string} [hint] - التلميح الاختياري الممرر من محرك الـ Flutter (مثل: urd, ukr, fas)
+ * @returns {string} رمز اللغة المفردة الصارم الخاص بمحرك Tesseract
+ */
+function mapScriptToSingleLanguage(script, hint) {
+    // توحيد صيغة التلميح القادم من التطبيق لمنع أي أخطاء في المطابقة
+    const standardizedHint = hint ? hint.toLowerCase().trim() : '';
+
+    switch (script) {
+        case 'Arabic':
+            // الفرز الذكي للأبجدية العربية لمنع تحميل حزمتين معاً في المتصفح الخفي
+            if (standardizedHint === 'urd' || standardizedHint === 'urdu') {
+                return 'urd'; // الأردو
+            } else if (standardizedHint === 'fas' || standardizedHint === 'persian' || standardizedHint === 'fa') {
+                return 'fas'; // الفارسية
+            }
+            return 'ara'; // العربية (الافتراضي للأبجدية العربية الحية)
+
+        case 'Cyrillic':
+            // الفرز الذكي للأبجدية السيريلية وعزل الأوكرانية عن الروسية قطعياً
+            if (standardizedHint === 'ukr' || standardizedHint === 'ukrainian' || standardizedHint === 'uk') {
+                return 'ukr'; // الأوكرانية
+            }
+            return 'rus'; // الروسية (الافتراضي للأبجدية السيريلية)
+
+        case 'Devanagari':
+            return 'hin'; // الهندية
+
+        case 'Bengali':
+            return 'ben'; // البنغالية
+
+        case 'Thai':
+            return 'tha'; // التايلاندية
+
+        case 'Han':
+            // الأبجدية الصينية: فرز صارم لحزمة مفردة بناءً على نوع الخط
+            if (standardizedHint === 'chi_tra' || standardizedHint === 'traditional') {
+                return 'chi_tra'; // الصينية التقليدية
+            }
+            return 'chi_sim'; // الصينية المبسطة (الافتراضي)
+
+        case 'Japanese':
+            return 'jpn'; // اليابانية
+
+        case 'Hangul':
+            return 'kor'; // الكورية
+
+        case 'Greek':
+            return 'ell'; // اليونانية
+
+        case 'Hebrew':
+            return 'heb'; // العبرية
+
+        default:
+            // في البيئة الخلفية الصامتة: يتم رمي الخطأ لكسر التدفق فوراً وإعدام الـ Worker دون تعليق النظام
+            throw new Error(`Execution Blocked: Detected script (${script}) is either Latin, dead, or excluded for performance optimization.`);
+    }
+}
+
+/**
+ * الدالة الأساسية والمغلقة لمعالجة الصورة سحابياً واستخراج النص غير اللاتيني الصافي
+ * @param {any} imageSource - ملف الصورة، الـ Blob، أو الـ Base64 الممرر سحابياً من محرك Flutter
+ * @param {string} [languageHint] - تلميح اللغة الممرر من التطبيق لتوجيه الفرز الذكي
+ * @returns {Promise<string>} النص الصافي المستخرج بالكامل
+ */
+async function processCloudOcr(imageSource, languageHint) {
+    // تعريف متغير الـ Worker في النطاق الأعلى لضمان إمكانية الوصول إليه وتدميره في كتلة finally تحت أي ظرف
+    let worker = null;
+
+    try {
+        // التحقق الأولي من وجود الصورة لمنع استهلاك الموارد بدون فائدة
+        if (!imageSource) {
+            throw new Error("Invalid Input: Image source is null or undefined.");
+        }
+
+        // --------------------------------------------------------------------
+        // الخطوة 1: الفحص الاستباقي المبدئي (Script Detection)
+        // --------------------------------------------------------------------
+        // يتم استدعاء دالة الفحص مباشرة على الصورة قبل إنشاء الـ Worker وقبل تحميل أي حزم لغات
+        const detectionResult = await Tesseract.detect(imageSource);
+        
+        if (!detectionResult || !detectionResult.data || !detectionResult.data.script) {
+            throw new Error("Detection Failure: Could not reliably determine the image script.");
+        }
+
+        const detectedScript = detectionResult.data.script;
+
+        // --------------------------------------------------------------------
+        // الخطوة 2: الفرز الذكي وتحديد حزمة لغة مفردة واحدة لا غير
+        // --------------------------------------------------------------------
+        // تطبيق الشرط الصارم: يمنع منعاً باتاً وضع علامات الجمع (+) أو دمج اللغات لحماية الذاكرة من التهنيج والتسريب
+        const targetLanguage = mapScriptToSingleLanguage(detectedScript, languageHint);
+
+        // --------------------------------------------------------------------
+        // الخطوة 3: إنشاء وتجهيز الـ Worker لنسخة تيسراكت 5 (Tesseract.js V5)
+        // --------------------------------------------------------------------
+        // في إصدار V5، يتم تمرير اللغة مباشرة أثناء الإنشاء لتجهيز المتصفح الخفي/الـ Worker بحزمة واحدة فقط
+        worker = await Tesseract.createWorker(targetLanguage);
+
+        // --------------------------------------------------------------------
+        // الخطوة 4: المسح الشامل واستخراج النص الصافي
+        // --------------------------------------------------------------------
+        const recognitionResult = await worker.recognize(imageSource);
+        
+        if (!recognitionResult || !recognitionResult.data) {
+            throw new Error("Recognition Failure: No text data returned from the cloud engine.");
+        }
+
+        // إرجاع النص الصافي المستخرج مباشرة لمحرك التطبيق دون أي إضافات أو رسائل واجهة
+        return recognitionResult.data.words.map(w => ({
+    text: w.text,
+    x0: w.bbox.x0,
+    y0: w.bbox.y0,
+    x1: w.bbox.x1,
+    y1: w.bbox.y1
+}));
+
+    } catch (error) {
+        // طباعة الخطأ في سجلات المطور الخاصة بالخلفية المظلمة (Console Logs) للتوثيق
+        console.error("Cloud Background Engine Exception:", error);
+        // إعادة رمي الخطأ لكسر الـ Promise لكي يعلم محرك Flutter في الطرف الآخر أن العملية فشلت
+        throw error;
+    } finally {
+        // --------------------------------------------------------------------
+        // الخطوة 5: الإعدام الفوري وتصفير الذاكرة الإجباري (Strict Memory Purge)
+        // --------------------------------------------------------------------
+        // كتلة finally تضمن بنسبة 100% أنه سواء نجحت العملية أو انهارت برمي خطأ، سيتم تدمير الـ Worker تماماً
+        if (worker) {
+            try {
+                await worker.terminate();
+            } catch (terminateError) {
+                // سحق أي خطأ ينتج أثناء التدمير لضمان عدم تعليق الخلفية
+                console.error("Critical: Failed to terminate worker space:", terminateError);
+            }
+        }
+    }
+}
+
+    // 3. (هنا تضع الكود الذي سألت عنه الآن) - في آخر السكريبت تماماً
+    window.runOcr = async (base64Image) => {
+        const result = await processCloudOcr(base64Image, 'ara'); 
+        return result; 
+    };
+</script>
