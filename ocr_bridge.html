@@ -163,7 +163,7 @@ async function processCloudOcr(imageSource, languageHint) {
 
     // 3. (هنا تضع الكود الذي سألت عنه الآن) - في آخر السكريبت تماماً
     window.runOcr = async (base64Image) => {
-        const result = await processCloudOcr(base64Image, 'ara'); 
+        const result = await processCloudOcr(base64Image, '');
         return result; 
     };
 </script>
