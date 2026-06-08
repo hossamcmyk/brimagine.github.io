@@ -126,14 +126,19 @@ async function processCloudOcr(imageSource, languageHint) {
             throw new Error("Recognition Failure: No text data returned from the cloud engine.");
         }
 
-        // إرجاع النص الصافي المستخرج مباشرة لمحرك التطبيق دون أي إضافات أو رسائل واجهة
-        return recognitionResult.data.words.map(w => ({
-    text: w.text,
-    x0: w.bbox.x0,
-    y0: w.bbox.y0,
-    x1: w.bbox.x1,
-    y1: w.bbox.y1
-}));
+        // إرجاع الهيكل الهندسي الكامل (بلوكات، سطور، كلمات) للحفاظ على قوة التحديد في التطبيق
+        return recognitionResult.data.blocks.map(b => ({
+            text: b.text,
+            bbox: b.bbox,
+            lines: b.lines.map(l => ({
+                text: l.text,
+                bbox: l.bbox,
+                words: l.words.map(w => ({
+                    text: w.text,
+                    bbox: w.bbox
+                }))
+            }))
+        }));
 
     } catch (error) {
         // طباعة الخطأ في سجلات المطور الخاصة بالخلفية المظلمة (Console Logs) للتوثيق
