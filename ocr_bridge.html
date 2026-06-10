@@ -98,7 +98,7 @@ async function processCloudOcr(imageSource, languageHint) {
         worker = await Tesseract.createWorker({
            workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/worker.min.js',
            corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4/tesseract-core.wasm.js',
-           langPath: 'https://tessdata.projectnaptha.com/4.0.0/' 
+           langPath: 'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/' 
         });
         await worker.load();
 
