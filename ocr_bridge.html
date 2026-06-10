@@ -100,7 +100,7 @@ async function processCloudOcr(imageSource, languageHint) {
         const targetLanguage = mapScriptToSingleLanguage(detectedScript, languageHint);
 
         // 2. إنشاء الـ Worker (طريقة V4 الصحيحة)
-        worker = Tesseract.createWorker(); // لا نضع اللغة هنا في V4
+        worker = await Tesseract.createWorker(); // لا نضع اللغة هنا في V4
         
         await worker.load();
         await worker.loadLanguage(targetLanguage);
