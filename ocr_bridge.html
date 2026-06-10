@@ -101,7 +101,9 @@ async function processCloudOcr(imageSource, languageHint) {
 
         // 2. إنشاء الـ Worker (طريقة V4 الصحيحة)
         worker = await Tesseract.createWorker(); // لا نضع اللغة هنا في V4
-        
+           workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/worker.min.js',
+           corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4/tesseract-core.wasm.js',
+        });
         await worker.load();
         await worker.loadLanguage(targetLanguage);
         await worker.initialize(targetLanguage);
