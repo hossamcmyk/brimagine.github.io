@@ -94,21 +94,25 @@ async function processCloudOcr(imageSource, languageHint) {
         }
 
         // --------------------------------------------------------------------
-        // 1. الفحص الاستباقي (متاح في V4)
-        const detectionResult = await Tesseract.detect(imageSource);
-        const detectedScript = detectionResult.data.script;
-        const targetLanguage = mapScriptToSingleLanguage(detectedScript, languageHint);
-
-        // 2. إنشاء الـ Worker (طريقة V4 الصحيحة)
-         worker = await Tesseract.createWorker({ // لا نضع اللغة هنا في V4
+       // 1. إنشاء الـ Worker وتزويده بالخريطة (الروابط) والقاموس أولاً
+        worker = await Tesseract.createWorker({
            workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/worker.min.js',
            corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4/tesseract-core.wasm.js',
+           langPath: 'https://tessdata.projectnaptha.com/4.0.0/' 
         });
         await worker.load();
+
+        // 2. الاكتشاف: تحميل حزمة osd (الضرورية للاكتشاف) ثم الفحص
+        await worker.loadLanguage('osd');
+        await worker.initialize('osd');
+        const detectionResult = await worker.detect(imageSource);
+        
+        // 3. التحويل للغة المكتشفة: بناءً على النتيجة نغير "لسان" المحرك
+        const targetLanguage = mapScriptToSingleLanguage(detectionResult.data.script, languageHint);
         await worker.loadLanguage(targetLanguage);
         await worker.initialize(targetLanguage);
 
-        // 3. المسح
+        // 4. المسح الفعلي النهائي بعد تحديد اللغة
         const recognitionResult = await worker.recognize(imageSource);
         
         // إرجاع البيانات المنظمة لـ Flutter
