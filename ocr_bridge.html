@@ -2,7 +2,7 @@
 <script src='https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js'></script>
 
 <script>
-    // 2. هنا تضع "كود تيسراكت V5" الذي أرسلته لي في أول المحادثة (الدوال الأصلية)
+    // 2. هنا تضع "كود تيسراكت V4" الذي أرسلته لي في أول المحادثة (الدوال الأصلية)
     /**
  * ============================================================================
  * نظام المعالجة السحابي المغلق واستخراج النصوص غير اللاتينية (Enterprise Production Edition)
@@ -94,39 +94,22 @@ async function processCloudOcr(imageSource, languageHint) {
         }
 
         // --------------------------------------------------------------------
-        // الخطوة 1: الفحص الاستباقي المبدئي (Script Detection)
-        // --------------------------------------------------------------------
-        // يتم استدعاء دالة الفحص مباشرة على الصورة قبل إنشاء الـ Worker وقبل تحميل أي حزم لغات
+        // 1. الفحص الاستباقي (متاح في V4)
         const detectionResult = await Tesseract.detect(imageSource);
-        
-        if (!detectionResult || !detectionResult.data || !detectionResult.data.script) {
-            throw new Error("Detection Failure: Could not reliably determine the image script.");
-        }
-
         const detectedScript = detectionResult.data.script;
-
-        // --------------------------------------------------------------------
-        // الخطوة 2: الفرز الذكي وتحديد حزمة لغة مفردة واحدة لا غير
-        // --------------------------------------------------------------------
-        // تطبيق الشرط الصارم: يمنع منعاً باتاً وضع علامات الجمع (+) أو دمج اللغات لحماية الذاكرة من التهنيج والتسريب
         const targetLanguage = mapScriptToSingleLanguage(detectedScript, languageHint);
 
-        // --------------------------------------------------------------------
-        // الخطوة 3: إنشاء وتجهيز الـ Worker لنسخة تيسراكت 5 (Tesseract.js V5)
-        // --------------------------------------------------------------------
-        // في إصدار V5، يتم تمرير اللغة مباشرة أثناء الإنشاء لتجهيز المتصفح الخفي/الـ Worker بحزمة واحدة فقط
-        worker = await Tesseract.createWorker(targetLanguage);
+        // 2. إنشاء الـ Worker (طريقة V4 الصحيحة)
+        worker = Tesseract.createWorker(); // لا نضع اللغة هنا في V4
+        
+        await worker.load();
+        await worker.loadLanguage(targetLanguage);
+        await worker.initialize(targetLanguage);
 
-        // --------------------------------------------------------------------
-        // الخطوة 4: المسح الشامل واستخراج النص الصافي
-        // --------------------------------------------------------------------
+        // 3. المسح
         const recognitionResult = await worker.recognize(imageSource);
         
-        if (!recognitionResult || !recognitionResult.data) {
-            throw new Error("Recognition Failure: No text data returned from the cloud engine.");
-        }
-
-        // إرجاع الهيكل الهندسي الكامل (بلوكات، سطور، كلمات) للحفاظ على قوة التحديد في التطبيق
+        // إرجاع البيانات المنظمة لـ Flutter
         return recognitionResult.data.blocks.map(b => ({
             text: b.text,
             bbox: b.bbox,
@@ -141,29 +124,20 @@ async function processCloudOcr(imageSource, languageHint) {
         }));
 
     } catch (error) {
-        // طباعة الخطأ في سجلات المطور الخاصة بالخلفية المظلمة (Console Logs) للتوثيق
-        console.error("Cloud Background Engine Exception:", error);
-        // إعادة رمي الخطأ لكسر الـ Promise لكي يعلم محرك Flutter في الطرف الآخر أن العملية فشلت
+        console.error("JS Error:", error);
         throw error;
     } finally {
-        // --------------------------------------------------------------------
-        // الخطوة 5: الإعدام الفوري وتصفير الذاكرة الإجباري (Strict Memory Purge)
-        // --------------------------------------------------------------------
-        // كتلة finally تضمن بنسبة 100% أنه سواء نجحت العملية أو انهارت برمي خطأ، سيتم تدمير الـ Worker تماماً
         if (worker) {
-            try {
-                await worker.terminate();
-            } catch (terminateError) {
-                // سحق أي خطأ ينتج أثناء التدمير لضمان عدم تعليق الخلفية
-                console.error("Critical: Failed to terminate worker space:", terminateError);
-            }
+            await worker.terminate();
         }
     }
 }
 
-    // 3. (هنا تضع الكود الذي سألت عنه الآن) - في آخر السكريبت تماماً
-    window.runOcr = async (base64Image) => {
-        const result = await processCloudOcr(base64Image, '');
-        return result; 
-    };
+window.runOcr = async (base64Image) => {
+    try {
+        return await processCloudOcr(base64Image, '');
+    } catch (e) {
+        return null;
+    }
+};
 </script>
