@@ -84,35 +84,32 @@ function mapScriptToSingleLanguage(script, hint) {
  * @returns {Promise<string>} النص الصافي المستخرج بالكامل
  */
 async function processCloudOcr(imageSource, languageHint) {
-    // تعريف متغير الـ Worker في النطاق الأعلى لضمان إمكانية الوصول إليه وتدميره في كتلة finally تحت أي ظرف
     let worker = null;
-
+    
     try {
-        // التحقق الأولي من وجود الصورة لمنع استهلاك الموارد بدون فائدة
-        if (!imageSource) {
-            throw new Error("Invalid Input: Image source is null or undefined.");
-        }
+        if (!imageSource) return null;
 
-        // --------------------------------------------------------------------
-       // 1. إنشاء الـ Worker وتزويده بالخريطة (الروابط) والقاموس أولاً
-        worker = await Tesseract.createWorker({
-           workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/worker.min.js',
-           corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4/tesseract-core.wasm.js',
-           langPath: 'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/' 
+        // الخطوة 1: الاكتشاف الخارجي (Static) - يحدد اللغة ويغلق نفسه فوراً لتنظيف الذاكرة
+        const detectionResult = await Tesseract.detect(imageSource, {
+            workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/worker.min.js',
+            corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4/tesseract-core.wasm.js',
         });
-        await worker.load();
 
-        // 2. الاكتشاف: تحميل حزمة osd (الضرورية للاكتشاف) ثم الفحص
-        await worker.loadLanguage('osd');
-        await worker.initialize('osd');
-        const detectionResult = await worker.detect(imageSource);
-        
-        // 3. التحويل للغة المكتشفة: بناءً على النتيجة نغير "لسان" المحرك
+        // تحديد اللغة المستهدفة بناءً على الاكتشاف والتلميح
         const targetLanguage = mapScriptToSingleLanguage(detectionResult.data.script, languageHint);
+
+        // الخطوة 2: بناء الووركر للغة المستهدفة مباشرة بذاكرة جديدة ونظيفة
+        worker = await Tesseract.createWorker({
+            workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/worker.min.js',
+            corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4/tesseract-core.wasm.js',
+            langPath: 'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/' 
+        });
+
+        await worker.load();
         await worker.loadLanguage(targetLanguage);
         await worker.initialize(targetLanguage);
 
-        // 4. المسح الفعلي النهائي بعد تحديد اللغة
+        // الخطوة 3: المسح الفعلي النهائي
         const recognitionResult = await worker.recognize(imageSource);
         
         // إرجاع البيانات المنظمة لـ Flutter
@@ -130,19 +127,26 @@ async function processCloudOcr(imageSource, languageHint) {
         }));
 
     } catch (error) {
-        console.error("JS Error:", error);
-        throw error;
+        // إدارة صامتة للأخطاء: طباعة المشكلة وإرجاع null لمنع تعليق بيئة الجسر السحابي
+        console.error("Critical OCR Runtime Error:", error);
+        return null; 
     } finally {
+        // الخطوة 4: تصفير وإعدام الذاكرة بشكل قطعي لحمايتها من الـ Memory Leak
         if (worker) {
             await worker.terminate();
         }
     }
 }
 
-window.runOcr = async (base64Image) => {
+/**
+ * واجهة التخاطب الخارجية (Bridge) المستدعاة من طرف Flutter
+ * تم تعديلها لتستقبل التلميح (hint) ديناميكياً بدلاً من إهماله
+ */
+window.runOcr = async (base64Image, languageHint = '') => {
     try {
-        return await processCloudOcr(base64Image, '');
+        return await processCloudOcr(base64Image, languageHint);
     } catch (e) {
+        console.error("Bridge Error:", e);
         return null;
     }
 };
