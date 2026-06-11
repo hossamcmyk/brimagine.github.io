@@ -72,8 +72,11 @@ function mapScriptToSingleLanguage(script, hint) {
             return 'heb'; // العبرية
 
         default:
-            // في البيئة الخلفية الصامتة: يتم رمي الخطأ لكسر التدفق فوراً وإعدام الـ Worker دون تعليق النظام
-            throw new Error(`Execution Blocked: Detected script (${script}) is either Latin, dead, or excluded for performance optimization.`);
+            // إذا فشل المحرك في تحديد الأبجدية أو أخطأ وقال "Latin"
+            // نعتمد "تلقائياً" على اللغة التي أرسلها الـ Flutter (standardizedHint)
+            // لكي يستمر الكود ويصل لسطر المسح (Recognize) بدلاً من الانتحار.
+            return standardizedHint;
+
     }
 }
 
